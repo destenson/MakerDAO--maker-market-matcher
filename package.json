@@ -1,0 +1,23 @@
+{
+  "name": "maker-market-matcher",
+  "version": "1.0.0",
+  "description": "Keeper prototype for automatic trading on the Maker market",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BlockChainCompany/maker-market-matcher.git"
+  },
+  "keywords": [
+    "blockchain",
+    "maker",
+    "market",
+    "trading"
+  ],
+  "bugs": {
+    "url": "https://github.com/BlockChainCompany/maker-market-matcher/issues"
+  },
+  "homepage": "https://github.com/BlockChainCompany/maker-market-matcher#readme"
+}

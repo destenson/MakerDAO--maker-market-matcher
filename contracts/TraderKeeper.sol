@@ -38,3 +38,5 @@ contract TraderKeeper is Assertive {
     }
     
 }
+
+contract TraderKeeperMarket is SimpleMarket {}

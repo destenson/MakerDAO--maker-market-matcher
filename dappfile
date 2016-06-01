@@ -3,6 +3,8 @@ version: 0.1.0
 layout:
   sol_sources: contracts
   build_dir: build
+dependencies:
+  maker-otc: 0.1.0
 environments:
   default: morden
   

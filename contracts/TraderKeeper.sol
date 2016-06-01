@@ -1,3 +1,5 @@
+import 'maker-otc/simple_market.sol';
+
 contract TraderKeeper {
     
     struct Wallet {
@@ -5,9 +7,9 @@ contract TraderKeeper {
     }
     
     mapping(address => Wallet) users;
-    address maker_address;
+    SimpleMarket maker_address;
     
-    function TraderKeeper (address contract_address) {
+    function TraderKeeper (SimpleMarket contract_address) {
         maker_address = contract_address;
     }
     
@@ -30,8 +32,8 @@ contract TraderKeeper {
     
     //initially only the amount that was bought can be sold, so quantity is the same for bid/ask
     function trade(uint bid_id, uint ask_id, uint quantity) {
-        maker_address.call(bytes4(sha3("buyPartial(uint256, uint256)")), bid_id, quantity);
-        maker_address.call(bytes4(sha3("buyPartial(uint256, uint256)")), ask_id, quantity);
+        maker_address.buyPartial(bid_id, quantity);
+        maker_address.buyPartial(ask_id, quantity);
     }
     
 }

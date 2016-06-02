@@ -33,8 +33,10 @@ contract TraderKeeper is Assertive {
     
     //initially only the amount that was bought can be sold, so quantity is the same for bid/ask
     function trade(uint bid_id, uint ask_id, uint quantity) {
-        assert(maker_address.buyPartial(bid_id, quantity));
-        assert(maker_address.buyPartial(ask_id, quantity));
+        //maker_address.buyPartial(bid_id, quantity);
+        //maker_address.buyPartial(ask_id, quantity);
+        //assert(bidSuccess);
+        //assert(askSuccess);
     }
     
 }

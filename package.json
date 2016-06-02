@@ -2,7 +2,7 @@
   "name": "maker-market-matcher",
   "version": "1.0.0",
   "description": "Keeper prototype for automatic trading on the Maker market",
-  "main": "index.js",
+  "main": "keeper.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

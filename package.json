@@ -6,6 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "dependencies": {
+    "sugar": "^1.4.1",
+    "web3": "^0.17.0-alpha"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/BlockChainCompany/maker-market-matcher.git"

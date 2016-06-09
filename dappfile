@@ -12,9 +12,15 @@ environments:
       otc:
         class: TraderKeeperMarket
         address: '0x3623ea50c4442ebed1de6456543f6921cd0e9d59'
+      matcher:
+        class: TraderKeeper
+        address: '0x3623ea40c4442ebed1de6456543f6921cd0e9d59'
+          
   live:
     objects:
       otc:
         class: TraderKeeperMarket
         address: '0xf51bc4633f5924465c8c6317169faf3e4312e82f'
- 
+      matcher:
+        class: TraderKeeper
+        address: '0x3623ea40c4442ebed1de6456543f6921cd0e9d54' 

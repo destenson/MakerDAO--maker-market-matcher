@@ -11,7 +11,7 @@ contract KeeperTester is Tester {
         market = simpleMarket;
     }
     
-    function doOffer(uint sell_how_much, bytes32 sell_which_token, uint buy_how_much, bytes32 buy_which_token) {
+    function doOffer(uint sell_how_much, ERC20 sell_which_token, uint buy_how_much, ERC20 buy_which_token) {
         market.offer(sell_how_much, sell_which_token, buy_how_much, buy_which_token);
     }
     
@@ -93,25 +93,25 @@ contract TraderKeeperTest is Test {
     
     function testIsOwnerFail() {
         buyer.doWithdraw(token1, 100, keeper);
-    }
+    }   
     
     function testTrade() {
-        keeper.trade(1, 1, token1, token 2);
+        keeper.trade(1, 1, 100, token1, token2);
     }
     
     function testFailTradeBuy() {
-        keeper.trade(0, 1, token1, token2);
+        keeper.trade(0, 1, 100, token1, token2);
     }
     
     function testFailTradeSell() {
-        keeper.trade(1, 0, token1, token2);
+        keeper.trade(1, 0, 100, token1, token2);
     }
     
     function testFailTradeInsufficientAllowance() {
     }
     
     function testFailTradeInsufficientBalance() {
-        keeper.withdraw(initial_balance_keeper_t1);
-        keeper.trade(1, 2, token1, token2);
+        keeper.withdraw(token1, initial_balance_keeper_t1);
+        keeper.trade(1, 2, 100, token1, token2);
     }
 }

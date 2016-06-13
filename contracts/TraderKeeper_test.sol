@@ -99,7 +99,7 @@ contract TraderKeeperTest is Test {
     
     function testFailWithdrawInsufficientFunds() {
         uint withdraw_amount = 1000000;
-        keeper.withdraw(token2, withdraw_amount);
+        keeper.withdraw(token2, initial_balance_keeper_t2 * 100);
     }
     
     function testFailIsOwner() {
@@ -118,13 +118,9 @@ contract TraderKeeperTest is Test {
         keeper.trade(bid_id_first, 0, 100, token1, token2);
     }
     
-    function testFailTradeInsufficientAllowance() {
-        throw;
-    }
-    
-    function testFailTradeInsufficientBalance() {
-        throw;
-        keeper.withdraw(token1, initial_balance_keeper_t1);
-        keeper.trade(1, 2, 100, token1, token2);
+    function testFailInsufficientBalance() {
+        keeper.withdraw(token2, initial_balance_keeper_t2);
+        assertEq(token2.balanceOf(keeper), 0);
+        keeper.trade(bid_id_first, ask_id_first, 10, token1, token2);
     }
 }

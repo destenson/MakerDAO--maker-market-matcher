@@ -5,11 +5,11 @@ import 'erc20/erc20.sol';
 contract TraderKeeper is Assertive {
     
     SimpleMarket maker_market;
-    address maker_market_address
+    address maker_market_address;
     address owner;
     
     function TraderKeeper (address maker_address) {
-        maker_market = new SimpleMarket(maker_address)
+        maker_market = SimpleMarket(maker_address);
         maker_market_address = maker_address;
         owner = msg.sender;
     }
@@ -25,7 +25,7 @@ contract TraderKeeper is Assertive {
     }
     function balanceOf(ERC20 token) constant returns (uint) {
         assert(msg.sender == owner);
-        return token.balanceOf(this)
+        return token.balanceOf(this);
     }
     
     //initially only the amount that was bought can be sold, so quantity is the same for bid/ask
@@ -37,7 +37,7 @@ contract TraderKeeper is Assertive {
         }
         var sell_allowance = selling.allowance(this, maker_market_address);
         if(sell_allowance < 500) {
-            selling.approve = selling.approve(maker_market_address, 1000);
+            selling.approve(maker_market_address, 1000);
         }
         
         var buySuccess = maker_market.buyPartial(bid_id, quantity);

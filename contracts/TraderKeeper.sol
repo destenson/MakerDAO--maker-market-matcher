@@ -16,12 +16,12 @@ contract TraderKeeper is Assertive {
     
     function withdraw(ERC20 token, uint token_amount) {
         assert(msg.sender == owner);
-        token.transfer(msg.sender, token_amount);
+        assert(token.transfer(msg.sender, token_amount));
     }
     
     function deposit(ERC20 token, uint token_amount) {
         assert(msg.sender == owner);
-        token.transferFrom(msg.sender, this, token_amount);
+        assert(token.transferFrom(msg.sender, this, token_amount));
     }
     function balanceOf(ERC20 token) constant returns (uint) {
         assert(msg.sender == owner);

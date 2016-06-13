@@ -5,7 +5,6 @@ web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'))
 var dapple = require('./build/js_module.js')
 var Dapple = new dapple.class(web3, 'morden')
 var sugar = require('sugar')
-console.log('keeper started')
 
 var offers = []
 var bids = []
@@ -16,6 +15,7 @@ var trade_gas_costs = 0
 startKeeper()
 
 function startKeeper() {
+    console.log('keeper started')
     Dapple.objects.otc.last_offer_id(function (error, result) {
         if(!error) {
             var id = result.toNumber()
@@ -42,11 +42,13 @@ function watchForUpdates() {
         }
     })
 }
+function printData(data) {
+    console.log(formattedString(data[1]) + ' sell how much: ' + data[0] + ' buy how much: ' + data[2])
+}
 
 function synchronizeOffer(offer_id, max) {
     Dapple.objects.otc.offers(offer_id, function (error, data) {
-        if(!error) {
-            console.log(data)
+        if(!error) { 
             var sell_how_much = data[0]
             var sell_which_token = formattedString(data[1])
             var buy_how_much = data[2]
@@ -75,7 +77,8 @@ function synchronizeOffer(offer_id, max) {
 
 function trade() {
     if(bids[0].bid_price > asks[0].ask_price + trade_gas_costs) {
-        //call contract
+        //call keeper contract but only buy the amount from the seller that the highest bidder wants to buy
+        Dapple.objects.maker-matcher.trade(bids[0].id, asks[0].id, bids[0].buy_how_much)
     }
 }
 
@@ -150,7 +153,6 @@ function updateOffer(id, sell_how_much, sell_which_token, buy_how_much, buy_whic
             currentOffer.bid_price = sell_how_much.div(buy_how_much).toNumber()
         }
     }
-    
 }
 
 function removeOffer(offer_id, sell_which_token) {
@@ -163,5 +165,5 @@ function removeOffer(offer_id, sell_which_token) {
 }
 
 function formattedString (str) {
-  return web3.toAscii(str).replace(/\0[\s\S]*$/g, '').trim()
+    return web3.toAscii(str).replace(/\0[\s\S]*$/g, '').trim()
 }

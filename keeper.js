@@ -5,6 +5,7 @@ web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'))
 var dapple = require('./build/js_module.js')
 var Dapple = new dapple.class(web3, 'morden')
 var sugar = require('sugar')
+var config = require('./config.global.js')
 
 var offers = []
 var bids = []
@@ -16,22 +17,13 @@ startKeeper()
 
 function startKeeper() {
     console.log('keeper started')
+    web3.eth.defaultAccount = '0xa1bff93e4c672727e6001528e25bbb5568c81a6d'
     Dapple.objects.otc.last_offer_id(function (error, result) {
         if(!error) {
             var id = result.toNumber()
             console.log(id)
-            console.log(Dapple.objects.otc.address)
-            console.log(Dapple.objects.matcher)
             if(id > 0) {
-                /*Dapple.objects.matcher.getBuyAmount(id, function (error, result) {
-                    if(!error) {
-                        console.log(result)
-                    }
-                    else 
-                        console.log(error)
-                })*/
-                //console.log(result)
-                //synchronizeOffer(id, id)
+                synchronizeOffer(id, id)
                 console.log('is synchronize offers finished?')
                 //watchForUpdates()
                 //trade()
@@ -61,13 +53,13 @@ function synchronizeOffer(offer_id, max) {
     Dapple.objects.otc.offers(offer_id, function (error, data) {
         if(!error) { 
             var sell_how_much = data[0]
-            var sell_which_token = formattedString(data[1])
+            var sell_which_token = data[1]
             var buy_how_much = data[2]
-            var buy_which_token = formattedString(data[3])
+            var buy_which_token = data[3]
             var owner = data[4]
             var active = data[5]
-            printData(offer_id, data)
             if(active) {
+                //printData(offer_id, data)
                 updateOffer(offer_id, sell_how_much, sell_which_token, buy_how_much, buy_which_token, owner)
             }
             else {
@@ -134,7 +126,7 @@ function updateOffer(id, sell_how_much, sell_which_token, buy_how_much, buy_whic
         bid_price: sell_how_much.div(buy_how_much).toNumber()
     }
     
-    if(sell_which_token === 'ETH') {
+    if(sell_which_token == config.ERC20.ETH && buy_which_token == config.ERC20.MKR) {
         var currentOffer = asks.find(function(offer) {
             return offer.id === newOffer.id
         })
@@ -150,7 +142,7 @@ function updateOffer(id, sell_how_much, sell_which_token, buy_how_much, buy_whic
             currentOffer.bid_price = sell_how_much.div(buy_how_much).toNumber()
         }
     }
-    else if(sell_which_token === 'MKR') {
+    else if(sell_which_token == config.ERC20.MKR && buy_which_token == config.ERC20.ETH) {
         var currentOffer = bids.find(function(offer) {
             return offer.id === newOffer.id
         })
@@ -167,15 +159,15 @@ function updateOffer(id, sell_how_much, sell_which_token, buy_how_much, buy_whic
         }
     }
     else {
-        //console.log('not a ETH or MKR token')
+        //console.log(sell_which_token)
     }
 }
 
 function removeOffer(offer_id, sell_which_token) {
-    if(sell_which_token === 'ETH') {
+    if(sell_which_token == config.ERC20.ETH) {
         asks.remove(function(offer) { return offer.id === offer_id})
     }
-    else if(sell_which_token === 'MKR') {
+    else if(sell_which_token == config.ERC20.MKR) {
         bids.remove(function(offer) { return offer.id === offer_id})
     }
 }

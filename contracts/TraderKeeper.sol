@@ -4,13 +4,9 @@ import 'erc20/erc20.sol';
 
 contract TraderKeeper is Assertive {
     
-    SimpleMarket maker_market;
-    address maker_market_address;
     address owner;
     
-    function TraderKeeper (address maker_address) {
-        maker_market = SimpleMarket(maker_address);
-        maker_market_address = maker_address;
+    function TraderKeeper () {
         owner = msg.sender;
     }
     
@@ -29,7 +25,9 @@ contract TraderKeeper is Assertive {
     }
     
     //initially only the amount that was bought can be sold, so quantity is the same for bid/ask
-    function trade(uint bid_id, uint ask_id, uint quantity, ERC20 buying, ERC20 selling) {
+    function trade(uint bid_id, uint ask_id, uint quantity, ERC20 buying, ERC20 selling, address maker_address) {
+        SimpleMarket maker_market = SimpleMarket(maker_address);
+        address maker_market_address = maker_address;
         assert(msg.sender == owner);
         var buy_allowance = buying.allowance(this, maker_market_address);
         if(buy_allowance < 500) {
@@ -40,10 +38,19 @@ contract TraderKeeper is Assertive {
             selling.approve(maker_market_address, 1000);
         }
         
-        var buySuccess = maker_market.buyPartial(bid_id, quantity);
-        assert(buySuccess);        
-        var sellSuccess = maker_market.buyPartial(ask_id, quantity);
-        assert(sellSuccess);
+        //var (a, b, c, d) = maker_market.getOffer(bid_id);
+        
+        var askSuccess = maker_market.buyPartial(ask_id, quantity);
+        assert(askSuccess);        
+        var bidSuccess = maker_market.buyPartial(bid_id, quantity);
+        assert(bidSuccess);
+    }
+    
+    function getBuyAmount(uint bid_id) returns (uint amount){
+        address maker_adres = 0x5661e7bc2403c7cc08df539e4a8e2972ec256d11;
+        SimpleMarket maker_market = SimpleMarket(maker_adres);
+        var (a, b, c, d) = maker_market.getOffer(bid_id);
+        return c;
     }
 }
 

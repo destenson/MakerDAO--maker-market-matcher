@@ -58,7 +58,7 @@ contract TraderKeeperTest is Test {
         token2.transfer(buyer, initial_balance_buyer_t2);
         token2.transfer(seller, initial_balance_seller_t2);
         
-        keeper = new TraderKeeper(simple_market);
+        keeper = new TraderKeeper();
        
         token1.transfer(keeper, initial_balance_keeper_t1);
         token2.transfer(keeper, initial_balance_keeper_t2);
@@ -107,20 +107,20 @@ contract TraderKeeperTest is Test {
     }   
     
     function testTrade() {
-        keeper.trade(bid_id_first, ask_id_first, 100, token1, token2);
+        keeper.trade(bid_id_first, ask_id_first, 100, token1, token2, simple_market);
     }
     
     function testFailTradeBuy() {
-        keeper.trade(0, ask_id_first, 100, token1, token2);
+        keeper.trade(0, ask_id_first, 100, token1, token2, simple_market);
     }
     
     function testFailTradeSell() {
-        keeper.trade(bid_id_first, 0, 100, token1, token2);
+        keeper.trade(bid_id_first, 0, 100, token1, token2, simple_market);
     }
     
     function testFailInsufficientBalance() {
         keeper.withdraw(token2, initial_balance_keeper_t2);
         assertEq(token2.balanceOf(keeper), 0);
-        keeper.trade(bid_id_first, ask_id_first, 10, token1, token2);
+        keeper.trade(bid_id_first, ask_id_first, 10, token1, token2, simple_market);
     }
 }

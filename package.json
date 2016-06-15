@@ -4,7 +4,8 @@
   "description": "Keeper prototype for automatic trading on the Maker market",
   "main": "keeper.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "deploy": "dapple run scripts/deploy_morden.ds -e morden",
+    "build": "dapple build"
   },
   "dependencies": {
     "sugar": "^1.4.1",

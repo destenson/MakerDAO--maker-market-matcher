@@ -20,10 +20,21 @@ function startKeeper() {
         if(!error) {
             var id = result.toNumber()
             console.log(id)
+            console.log(Dapple.objects.otc.address)
+            console.log(Dapple.objects.matcher)
             if(id > 0) {
-                synchronizeOffer(id, id)
-                watchForUpdates()
-                trade()
+                /*Dapple.objects.matcher.getBuyAmount(id, function (error, result) {
+                    if(!error) {
+                        console.log(result)
+                    }
+                    else 
+                        console.log(error)
+                })*/
+                //console.log(result)
+                //synchronizeOffer(id, id)
+                console.log('is synchronize offers finished?')
+                //watchForUpdates()
+                //trade()
             }
         }
         else {
@@ -42,8 +53,8 @@ function watchForUpdates() {
         }
     })
 }
-function printData(data) {
-    console.log(formattedString(data[1]) + ' sell how much: ' + data[0] + ' buy how much: ' + data[2])
+function printData(offer_id, data) {
+    console.log('id: ' + offer_id + ' sell token: ' + data[1] + ' sell how much: ' + data[0] + ' ' + data[3] + ' buy how much: ' + data[2] + ' ' + data[5])
 }
 
 function synchronizeOffer(offer_id, max) {
@@ -55,6 +66,7 @@ function synchronizeOffer(offer_id, max) {
             var buy_which_token = formattedString(data[3])
             var owner = data[4]
             var active = data[5]
+            printData(offer_id, data)
             if(active) {
                 updateOffer(offer_id, sell_how_much, sell_which_token, buy_how_much, buy_which_token, owner)
             }
@@ -69,6 +81,7 @@ function synchronizeOffer(offer_id, max) {
             synchronizeOffer(offer_id - 1, offer_id)
         }
         else {
+            console.log('time to sort the offers')
             sortOffers()            
             showActiveOffers()
         }
@@ -76,10 +89,10 @@ function synchronizeOffer(offer_id, max) {
 }
 
 function trade() {
-    if(bids[0].bid_price > asks[0].ask_price + trade_gas_costs) {
+    //if(bids[0] != null && asks[0] != null && bids[0].bid_price > asks[0].ask_price + trade_gas_costs) {
         //call keeper contract but only buy the amount from the seller that the highest bidder wants to buy
-        Dapple.objects.maker-matcher.trade(bids[0].id, asks[0].id, bids[0].buy_how_much)
-    }
+        //Dapple.objects.matcher.trade(bids[0].id, asks[0].id, bids[0].buy_how_much)
+    //}
 }
 
 function sortOffers() {
@@ -152,6 +165,9 @@ function updateOffer(id, sell_how_much, sell_which_token, buy_how_much, buy_whic
             currentOffer.ask_price = buy_how_much.div(sell_how_much).toNumber()
             currentOffer.bid_price = sell_how_much.div(buy_how_much).toNumber()
         }
+    }
+    else {
+        //console.log('not a ETH or MKR token')
     }
 }
 

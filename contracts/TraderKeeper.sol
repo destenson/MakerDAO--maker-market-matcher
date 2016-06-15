@@ -25,20 +25,19 @@ contract TraderKeeper is Assertive {
     }
     
     //initially only the amount that was bought can be sold, so quantity is the same for bid/ask
-    function trade(uint bid_id, uint ask_id, uint quantity, ERC20 buying, ERC20 selling, address maker_address) {
-        SimpleMarket maker_market = SimpleMarket(maker_address);
-        address maker_market_address = maker_address;
+    function trade(uint bid_id, uint ask_id, uint quantity, ERC20 buying, ERC20 selling, SimpleMarket maker_address) {
         assert(msg.sender == owner);
+        var bid_buy_how_much = getBuyAmount(bid_id, maker_address);
         var buy_allowance = buying.allowance(this, maker_market_address);
-        if(buy_allowance < 500) {
-            buying.approve(maker_market_address, 1000);
-        }
-        var sell_allowance = selling.allowance(this, maker_market_address);
-        if(sell_allowance < 500) {
-            selling.approve(maker_market_address, 1000);
+        if(buy_allowance < bid_buy_how_much) {
+            buying.approve(maker_market_address, bid_buy_how_much);
         }
         
-        //var (a, b, c, d) = maker_market.getOffer(bid_id);
+        var ask_buy_how_much = getBuyAmount(ask_id, maker_address);
+        var sell_allowance = selling.allowance(this, maker_market_address);
+        if(sell_allowance < ask_buy_how_much) {
+            selling.approve(maker_market_address, ask_buy_how_much);
+        }
         
         var askSuccess = maker_market.buyPartial(ask_id, quantity);
         assert(askSuccess);        
@@ -46,11 +45,9 @@ contract TraderKeeper is Assertive {
         assert(bidSuccess);
     }
     
-    function getBuyAmount(uint bid_id) returns (uint amount){
-        address maker_adres = 0x5661e7bc2403c7cc08df539e4a8e2972ec256d11;
-        SimpleMarket maker_market = SimpleMarket(maker_adres);
-        var (a, b, c, d) = maker_market.getOffer(bid_id);
-        return c;
+    function getBuyAmount(uint bid_id, SimpleMarket maker_market) constant returns (uint amount){
+        var (sell_how_much, sell_which_token, buy_how_much, buy_which_token) = maker_market.getOffer(bid_id);
+        return buy_how_much;
     }
 }
 

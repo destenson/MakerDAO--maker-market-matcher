@@ -12,6 +12,7 @@ var bids = []
 var asks = []
 //get this from config file
 var trade_gas_costs = 0
+var trade_gas = 500000
 
 startKeeper()
 
@@ -25,8 +26,7 @@ function startKeeper() {
             if(id > 0) {
                 synchronizeOffer(id, id)
                 console.log('is synchronize offers finished?')
-                //watchForUpdates()
-                //trade()
+                
             }
         }
         else {
@@ -76,15 +76,30 @@ function synchronizeOffer(offer_id, max) {
             console.log('time to sort the offers')
             sortOffers()            
             showActiveOffers()
+            watchForUpdates()
+            trade()
         }
     })
 }
 
 function trade() {
-    //if(bids[0] != null && asks[0] != null && bids[0].bid_price > asks[0].ask_price + trade_gas_costs) {
+    console.log('bid price: ' + bids[0].bid_price)
+    console.log('ask price: ' + asks[0].ask_price)
+    
+    if(bids[0] != null && asks[0] != null && bids[0].bid_price > asks[0].ask_price + trade_gas_costs) {
         //call keeper contract but only buy the amount from the seller that the highest bidder wants to buy
-        //Dapple.objects.matcher.trade(bids[0].id, asks[0].id, bids[0].buy_how_much)
-    //}
+        console.log('Call trade: ', bids[0].id, asks[0].id, bids[0].buy_how_much, bids[0].buy_which_token, bids[0].sell_which_token,
+         Dapple.objects.matcher.address)
+        Dapple.objects.matcher.trade(bids[0].id, asks[0].id, bids[0].buy_how_much, bids[0].buy_which_token, bids[0].sell_which_token,
+         Dapple.objects.matcher.address, { gas: trade_gas }, function(error, data) {
+             if(error) {
+                 console.log(error)
+             }
+             else {
+                 console.log(data)
+             }
+         })
+    }
 }
 
 function sortOffers() {

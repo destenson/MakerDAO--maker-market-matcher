@@ -26,7 +26,8 @@
   },
   "homepage": "https://github.com/BlockChainCompany/maker-market-matcher#readme",
   "devDependencies": {
-    "mocha": "^2.5.3",
+    "chai": "*",
+    "mocha": "*",
     "winston": "^2.2.0"
   }
 }

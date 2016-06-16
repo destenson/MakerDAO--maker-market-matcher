@@ -19,22 +19,34 @@ contract TraderKeeper is Assertive {
         assert(msg.sender == owner);
         assert(token.transferFrom(msg.sender, this, token_amount));
     }
+    
     function balanceOf(ERC20 token) constant returns (uint) {
-        assert(msg.sender == owner);
         return token.balanceOf(this);
+    }
+    
+    function approve(ERC20 token, uint amount, SimpleMarket maker_address) {
+        token.approve(maker_address, amount);
     }
     
     //initially only the amount that was bought can be sold, so quantity is the same for bid/ask
     function trade(uint bid_id, uint ask_id, uint quantity, ERC20 buying, ERC20 selling, SimpleMarket maker_address) {
         assert(msg.sender == owner);
-        //TODO Check balance of keeper for the tokens
-        var bid_buy_how_much = getBuyAmount(bid_id, maker_address);
+        
+        //Check if the keeper has enough balance for the trades
+        var bid_buy_how_much = getBuyAmount(bid_id, maker_address);        
+        var balance_keeper_buying = balanceOf(buying);
+        assert(balance_keeper_buying >= bid_buy_how_much);
+        
+        var ask_buy_how_much = getBuyAmount(ask_id, maker_address);
+        var balance_keeper_selling = balanceOf(selling);
+        assert(balance_keeper_selling >= ask_buy_how_much);
+        
+        //Check and set allowance
         var buy_allowance = buying.allowance(this, maker_address);
         if(buy_allowance < bid_buy_how_much) {
             buying.approve(maker_address, bid_buy_how_much);
         }
         
-        var ask_buy_how_much = getBuyAmount(ask_id, maker_address);
         var sell_allowance = selling.allowance(this, maker_address);
         if(sell_allowance < ask_buy_how_much) {
             selling.approve(maker_address, ask_buy_how_much);
@@ -44,6 +56,7 @@ contract TraderKeeper is Assertive {
         assert(askSuccess);        
         var bidSuccess = maker_address.buyPartial(bid_id, quantity);
         assert(bidSuccess);
+        
     }
     
     function getBuyAmount(uint bid_id, SimpleMarket maker_market) constant returns (uint amount){

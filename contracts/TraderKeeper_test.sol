@@ -11,8 +11,8 @@ contract KeeperTester is Tester {
         market = simpleMarket;
     }
     
-    function doApprove(ERC20 which_token, uint amount) {
-        which_token.approve(market, amount);
+    function doApprove(ERC20 which_token, uint amount) constant returns (bool ok) {
+        return which_token.approve(market, amount);
     }
     
     function doOffer(uint sell_how_much, ERC20 sell_which_token, uint buy_how_much, ERC20 buy_which_token) returns (uint id) {
@@ -21,6 +21,10 @@ contract KeeperTester is Tester {
     
     function doWithdraw(ERC20 token, uint token_amount, TraderKeeper keeper) {
         keeper.withdraw(token, token_amount);
+    }
+    
+    function getOffer(uint id) constant returns (uint sell_how_much, ERC20 sell_which_token, uint buy_how_much, ERC20 buy_which_token) {
+        return market.getOffer(id);
     }
 }
 
@@ -62,21 +66,36 @@ contract TraderKeeperTest is Test {
        
         token1.transfer(keeper, initial_balance_keeper_t1);
         token2.transfer(keeper, initial_balance_keeper_t2);
+        token1.approve(simple_market, initial_balance_keeper_t1);
+        token2.approve(simple_market, initial_balance_keeper_t2);
+        //keeper.approve(token1, initial_balance_keeper_t1, simple_market);
+        //keeper.approve(token2, initial_balance_keeper_t2, simple_market);
         
         //create bids and asks        
-        buyer.doApprove(token1, buyer_token1_bid);
-        seller.doApprove(token2, seller_token2_ask);
+        buyer.doApprove(token1, initial_balance_buyer_t1);
+        buyer.doApprove(token2, initial_balance_buyer_t2);
+        seller.doApprove(token1, initial_balance_seller_t1);
+        seller.doApprove(token2, initial_balance_seller_t2);
         bid_id_first = buyer.doOffer(buyer_token1_bid, token1, 500, token2);
         ask_id_first = seller.doOffer(seller_token2_ask, token2, 100, token1);
     }
     
     function testSetUp() {
+        assertEq(buyer.doApprove(token1, buyer_token1_bid), true);
+        assertEq(seller.doApprove(token2, seller_token2_ask), true);
+        assertEq(token1.approve(simple_market, initial_balance_keeper_t1), true);
+        assertEq(token2.approve(simple_market, initial_balance_keeper_t2), true);
         assertEq(token1.balanceOf(keeper), initial_balance_keeper_t1);
         assertEq(token2.balanceOf(keeper), initial_balance_keeper_t2);
         assertEq(token1.balanceOf(buyer), initial_balance_buyer_t1 - buyer_token1_bid);
         assertEq(token1.balanceOf(seller), initial_balance_seller_t1);
         assertEq(token2.balanceOf(buyer), initial_balance_buyer_t2);
         assertEq(token2.balanceOf(seller), initial_balance_seller_t2 - seller_token2_ask);
+        assertEq(bid_id_first, 1);
+        assertEq(ask_id_first, 2);
+        
+        var (a,b,c,d) = buyer.getOffer(1);
+        assertEq(c, 500);
     }
     
     function testDeposit() {
@@ -107,15 +126,15 @@ contract TraderKeeperTest is Test {
     }   
     
     function testTrade() {
-        keeper.trade(bid_id_first, ask_id_first, 100, token1, token2, simple_market);
+        keeper.trade(bid_id_first, ask_id_first, 100, token2, token1, simple_market);
     }
     
     function testFailTradeBuy() {
-        keeper.trade(0, ask_id_first, 100, token1, token2, simple_market);
+        keeper.trade(0, ask_id_first, 100, token2, token1, simple_market);
     }
     
     function testFailTradeSell() {
-        keeper.trade(bid_id_first, 0, 100, token1, token2, simple_market);
+        keeper.trade(bid_id_first, 0, 100, token2, token1, simple_market);
     }
     
     function testFailInsufficientBalance() {

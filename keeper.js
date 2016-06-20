@@ -1,6 +1,7 @@
 var Web3 = require('web3')
 var web3 = new Web3()
 web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'))
+web3.eth.defaultAccount = web3.eth.accounts[0];
 
 var dapple = require('./build/js_module.js')
 var Dapple = new dapple.class(web3, 'morden')
@@ -10,15 +11,34 @@ var config = require('./config.global.js')
 var offers = []
 var bids = []
 var asks = []
-//get this from config file
-var trade_gas_costs = 0
-var trade_gas = 500000
 
-startKeeper()
+//TODO Check arguments whether to start keeper, deposit/withdraw tokens or check the balance
+
+//startKeeper()
+showBalance();
+
+
+function showBalance() {
+    Dapple.objects.matcher.balanceOf(config.ERC20.ETH, function(error, result) {
+        if(!error) {
+            console.log('ETH balance: ', result.toString());
+        } 
+        else {
+            console.log('Error: ', error);
+        }
+    });
+    Dapple.objects.matcher.balanceOf(config.ERC20.MKR, function(error, result) {
+        if(!error) {
+            console.log('MKR balance: ', result.toString());
+        } 
+        else {
+            console.log('Error: ', error);
+        }
+    });
+}
 
 function startKeeper() {
     console.log('keeper started')
-    web3.eth.defaultAccount = '0xa1bff93e4c672727e6001528e25bbb5568c81a6d'
     Dapple.objects.otc.last_offer_id(function (error, result) {
         if(!error) {
             var id = result.toNumber()
@@ -76,41 +96,61 @@ function synchronizeOffer(offer_id, max) {
             console.log('time to sort the offers')
             sortOffers()            
             showActiveOffers()
-            watchForUpdates()
-            trade()
+            //watchForUpdates()
+            //trade()
         }
     })
 }
 
 function trade() {
-    console.log('bid price: ' + bids[0].bid_price)
-    console.log('ask price: ' + asks[0].ask_price)
-    
-    if(bids[0] != null && asks[0] != null && bids[0].bid_price > asks[0].ask_price + trade_gas_costs) {
-        //call keeper contract but only buy the amount from the seller that the highest bidder wants to buy
-        console.log('Call trade: ', bids[0].id, asks[0].id, bids[0].buy_how_much, bids[0].buy_which_token, bids[0].sell_which_token,
-         Dapple.objects.matcher.address)
-        Dapple.objects.matcher.trade(bids[0].id, asks[0].id, bids[0].buy_how_much, bids[0].buy_which_token, bids[0].sell_which_token,
-         Dapple.objects.matcher.address, { gas: trade_gas }, function(error, data) {
-             if(error) {
-                 console.log(error)
-             }
-             else {
-                 console.log(data)
-             }
-         })
+    if(bids[0] != null && asks[0] != null && bids[0].price > asks[0].price + config.trade_gas_costs) {
+        console.log('Call trade: ', bids[0].id, asks[0].id, bids[0].buy_how_much, bids[0].buy_which_token, bids[0].sell_which_token, Dapple.objects.matcher.address)
+        
+        //TODO Use promise
+        Dapple.objects.matcher.balanceOf(config.ERC20.ETH, function(error, data) {
+            if(!error) {
+                var balance = data.toNumber()
+                var minimum_ask_bid = min(bids[0].buy_how_much, asks[0].sell_how_much)
+                var amount_before_balance = minimum_ask_bid * asks[0].price
+                var minimum_balance_amount = min(balance, amount_before_balance)
+                var ask_quantity = minimum_ask_bid * (minimum_balance_amount / amount_before_balance)
+                
+                var bid_quantity = ask_quantity * bids[0].price
+                
+                Dapple.objects.matcher.trade(bids[0].id, asks[0].id, bid_quantity, ask_quantity, bids[0].buy_which_token, bids[0].sell_which_token, Dapple.objects.matcher.address, {gas: config.trade_gas_costs }, function(fail, result) {
+                    if(!fail) {
+                        console.log(result)
+                    }
+                    else {
+                        console.log(fail)
+                    }
+                })
+            }
+            else {
+                console.log(error)
+            }
+        })
+    }
+}
+
+function min(a, b) {
+    if (a < b) {
+        return a    
+    } 
+    else {
+        return b
     }
 }
 
 function sortOffers() {
     //sort for the highest bid prices
     bids.sort(function(a,b) {
-        return b.bid_price - a.bid_price
+        return b.price - a.price
     })
     
     //sort for the lowest ask price
     asks.sort(function(a,b) {
-        return a.ask_price - b.ask_price 
+        return a.price - b.price 
     })
 }
 
@@ -118,18 +158,26 @@ function showActiveOffers() {
     console.log('Bids')
     bids.forEach(function(offer) {
         console.log('offer id: ' + offer.id + ' sell_token: ' + offer.sell_which_token + ' sell_how_much: ' + offer.sell_how_much
-        + ' buy_token: ' + offer.buy_which_token + ' buy_how_much: ' + offer.buy_how_much + ' ask_price: ' + offer.ask_price
-        + ' bid_price: ' + offer.bid_price)
+        + ' buy_token: ' + offer.buy_which_token + ' buy_how_much: ' + offer.buy_how_much + ' ask_price: ' + offer.price
+        + ' bid_price: ' + offer.price)
     })
     console.log('Asks')
     asks.forEach(function(offer) {
         console.log('offer id: ' + offer.id + ' sell_token: ' + offer.sell_which_token + ' sell_how_much: ' + offer.sell_how_much
-        + ' buy_token: ' + offer.buy_which_token + ' buy_how_much: ' + offer.buy_how_much + ' ask_price: ' + offer.ask_price
-        + ' bid_price: ' + offer.bid_price)
+        + ' buy_token: ' + offer.buy_which_token + ' buy_how_much: ' + offer.buy_how_much + ' ask_price: ' + offer.price
+        + ' bid_price: ' + offer.price)
     })
 }
 
 function updateOffer(id, sell_how_much, sell_which_token, buy_how_much, buy_which_token, owner) {
+    var price = 0
+    if(sell_which_token == config.ERC20.ETH) {
+        price = sell_how_much.div(buy_how_much).toNumber()
+    }
+    else if(sell_which_token == config.ERC20.MKR) {
+        price = buy_how_much.div(sell_how_much).toNumber()
+    }
+    
     var newOffer = {
         id: id,
         owner: owner,
@@ -137,8 +185,7 @@ function updateOffer(id, sell_how_much, sell_which_token, buy_how_much, buy_whic
         sell_which_token: sell_which_token,
         sell_how_much: sell_how_much.toString(10),
         buy_how_much: buy_how_much.toString(10),
-        ask_price: buy_how_much.div(sell_how_much).toNumber(),
-        bid_price: sell_how_much.div(buy_how_much).toNumber()
+        price: price
     }
     
     if(sell_which_token == config.ERC20.ETH && buy_which_token == config.ERC20.MKR) {
@@ -153,8 +200,7 @@ function updateOffer(id, sell_how_much, sell_which_token, buy_how_much, buy_whic
         {
             currentOffer.buy_how_much = buy_how_much.toString(10)
             currentOffer.sell_how_much = sell_how_much.toString(10)
-            currentOffer.ask_price = buy_how_much.div(sell_how_much).toNumber()
-            currentOffer.bid_price = sell_how_much.div(buy_how_much).toNumber()
+            currentOffer.price = newOffer.price
         }
     }
     else if(sell_which_token == config.ERC20.MKR && buy_which_token == config.ERC20.ETH) {
@@ -169,8 +215,7 @@ function updateOffer(id, sell_how_much, sell_which_token, buy_how_much, buy_whic
         {
             currentOffer.buy_how_much = buy_how_much.toString(10)
             currentOffer.sell_how_much = sell_how_much.toString(10)
-            currentOffer.ask_price = buy_how_much.div(sell_how_much).toNumber()
-            currentOffer.bid_price = sell_how_much.div(buy_how_much).toNumber()
+            currentOffer.price = newOffer.price
         }
     }
     else {

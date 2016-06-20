@@ -1,85 +1,103 @@
 var assert = require('chai').assert;
 var expect = require('chai').expect;
 
-function addition(a, b) {
-    return a + b;
+var bidTenFourty = {
+    buy_which_token: "MKR",
+    sell_which_token: "ETH",
+    sell_how_much: 40,
+    buy_how_much: 10,
+    price: 4
 }
 
-describe('addition', function () {
-    it('should return the added values', function () {
-        assert.equal(10, addition(4,6));
-    });
-});
-
-var bidEqualTen = {
-        buy_which_token: "ETH",
-        sell_which_token: "MKR",
-        sell_how_much: 10,
-        buy_how_much: 10,
-        get ask_price() { this.buy_how_much.div(this.sell_how_much).toNumber()},
-        get bid_price() { this.sell_how_much.div(this.buy_how_much).toNumber()}
-    }
-
-var bidEqualFive = {
-        buy_which_token: "ETH",
-        sell_which_token: "MKR",
-        sell_how_much: 5,
-        buy_how_much: 5,
-        get ask_price() { this.buy_how_much.div(this.sell_how_much).toNumber()},
-        get bid_price() { this.sell_how_much.div(this.buy_how_much).toNumber()}
-    }
-
-var askEqualTen = {
-        buy_which_token: "MKR",
-        sell_which_token: "ETH",
-        sell_how_much: 10,
-        buy_how_much: 10,
-        get ask_price() { this.buy_how_much.div(this.sell_how_much).toNumber()},
-        get bid_price() { this.sell_how_much.div(this.buy_how_much).toNumber()}
-    }
-
-var askEqualFive = {
-        buy_which_token: "MKR",
-        sell_which_token: "ETH",
-        sell_how_much: 5,
-        buy_how_much: 5,
-        get ask_price() { this.buy_how_much.div(this.sell_how_much).toNumber()},
-        get bid_price() { this.sell_how_much.div(this.buy_how_much).toNumber()}
-    }
-
-var askHalfTen = {
-        buy_which_token: "ETH",
-        sell_which_token: "MKR",
-        sell_how_much: 10,
-        buy_how_much: 5,
-        get ask_price() { this.buy_how_much.div(this.sell_how_much).toNumber()},
-        get bid_price() { this.sell_how_much.div(this.buy_how_much).toNumber()}
-    }
-
-function determineTradeAmounts(bidToTrade, askToTrade) {
-    //quantity for bid
-    //quantity for ask
-    
-    return bidToTrade.buy_how_much;
+var bidFiveTwenty = {
+    buy_which_token: "MKR",
+    sell_which_token: "ETH",
+    sell_how_much: 20,
+    buy_how_much: 5,
+    price: 4
 }
+
+var askTwentyTen = {
+    buy_which_token: "ETH",
+    sell_which_token: "MKR",
+    sell_how_much: 10,
+    buy_how_much: 20,
+    price: 2
+}
+
+var askTenFive = {
+    buy_which_token: "ETH",
+    sell_which_token: "MKR",
+    sell_how_much: 5,
+    buy_how_much: 10,
+    price: 2
+}
+
+function getAskQuantity(bid, ask, balance) {
+    var minimumOfAskAndBid = min(bid.buy_how_much, ask.sell_how_much);
+    var amountBeforeBalance = minimumOfAskAndBid * ask.price;
+    var minimumOfBalanceAndAmount = min(balance, amountBeforeBalance);
+    var askQuantity = minimumOfAskAndBid * (minimumOfBalanceAndAmount / amountBeforeBalance);
+    return askQuantity;
+}
+
+function getBidQuantity(bid, ask, balance) {
+    var askQuantity = getAskQuantity(bid, ask, balance);
+    return askQuantity * bid.price;
+}
+
+function min(a, b) {
+    if (a < b) {
+        return a;    
+    } 
+    else {
+        return b;
+    }
+  }
 
 describe('Determine trade amounts', function() {
-    describe('Bid same as Ask', function() {
-        it('gets the trade amount from the bid buy_how_much', function() {
-            var tradeAmount = determineTradeAmounts(bidEqualTen, askEqualTen)
-            expect(tradeAmount).to.equal(10);
+    describe('Calculate the correct amount to buy from both the bid and the ask', function() {
+        it('Equal amount ask, bid and sufficient balance', function() {
+            var balance = 20;
+            var askQuantity = getAskQuantity(bidTenFourty, askTwentyTen, balance);
+            expect(askQuantity).to.equal(10);
+            var bidQuantity = getBidQuantity(bidTenFourty, askTwentyTen, balance);
+            expect(bidQuantity).to.equal(40);
         });
-        it('Bid/Ask same price but bid has half amount of ask', function() {
-            var tradeAmount = determineTradeAmounts(bidEqualFive, askEqualTen)
-            expect(tradeAmount).to.equal(5);
+        it('Equal amount ask, bid and insufficient balance', function() {
+            var balance = 10;
+            var askQuantity = getAskQuantity(bidTenFourty, askTwentyTen, balance);
+            expect(askQuantity).to.equal(5);
+            var bidQuantity = getBidQuantity(bidTenFourty, askTwentyTen, balance);
+            expect(bidQuantity).to.equal(20);
         });
-        it('Bid/Ask same price but ask has half amount of bid', function() {
-            var tradeAmount = determineTradeAmounts(bidEqualTen, askEqualFive)
-            expect(tradeAmount).to.equal(5);
+        it('Half the amount bid of ask and sufficient balance', function() {
+            var balance = 10;
+            var askQuantity = getAskQuantity(bidFiveTwenty, askTwentyTen, balance);
+            expect(askQuantity).to.equal(5);
+            var bidQuantity = getBidQuantity(bidFiveTwenty, askTwentyTen, balance);
+            expect(bidQuantity).to.equal(20);
         });
-        it('Bid/Ask same amount of ETH but ask half the price of bid', function() {
-            var tradeAmount = determineTradeAmounts(bidEqualTen, askHalfTen)
-            expect(tradeAmount).to.equal(5);
+        it('Half the amount bid of ask and insufficient balance', function() {
+            var balance = 8;
+            var askQuantity = getAskQuantity(bidFiveTwenty, askTwentyTen, balance);
+            expect(askQuantity).to.equal(4);
+            var bidQuantity = getBidQuantity(bidFiveTwenty, askTwentyTen, balance);
+            expect(bidQuantity).to.equal(16);
+        });
+        it('Half the amount ask of bid and sufficient balance', function() {
+            var balance = 10;
+            var askQuantity = getAskQuantity(bidTenFourty, askTenFive, balance);
+            expect(askQuantity).to.equal(5);
+            var bidQuantity = getBidQuantity(bidTenFourty, askTenFive, balance);
+            expect(bidQuantity).to.equal(20);
+        });
+        it('Half the amount ask of bid and insufficient balance', function() {
+            var balance = 8;
+            var askQuantity = getAskQuantity(bidTenFourty, askTenFive, balance);
+            expect(askQuantity).to.equal(4);
+            var bidQuantity = getBidQuantity(bidTenFourty, askTenFive, balance);
+            expect(bidQuantity).to.equal(16);
         });
     })
 })

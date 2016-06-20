@@ -29,7 +29,7 @@ contract TraderKeeper is Assertive {
     }
     
     //initially only the amount that was bought can be sold, so quantity is the same for bid/ask
-    function trade(uint bid_id, uint ask_id, uint quantity, ERC20 buying, ERC20 selling, SimpleMarket maker_address) {
+    function trade(uint bid_id, uint ask_id, uint bidQuantity, uint askQuantity, ERC20 buying, ERC20 selling, SimpleMarket maker_address) {
         assert(msg.sender == owner);
         
         //Check if the keeper has enough balance for the trades
@@ -52,9 +52,9 @@ contract TraderKeeper is Assertive {
             selling.approve(maker_address, ask_buy_how_much);
         }
         
-        var askSuccess = maker_address.buyPartial(ask_id, quantity);
+        var askSuccess = maker_address.buyPartial(ask_id, askQuantity);
         assert(askSuccess);        
-        var bidSuccess = maker_address.buyPartial(bid_id, quantity);
+        var bidSuccess = maker_address.buyPartial(bid_id, bidQuantity);
         assert(bidSuccess);
         
     }

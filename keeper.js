@@ -109,15 +109,15 @@ function trade() {
         //TODO Use promise
         Dapple.objects.matcher.balanceOf(config.ERC20.ETH, function(error, data) {
             if(!error) {
-                var balance = data.toNumber()
+                /*var balance = data.toNumber()
                 var minimum_ask_bid = min(bids[0].buy_how_much, asks[0].sell_how_much)
                 var amount_before_balance = minimum_ask_bid * asks[0].price
                 var minimum_balance_amount = min(balance, amount_before_balance)
                 var ask_quantity = minimum_ask_bid * (minimum_balance_amount / amount_before_balance)
                 
                 var bid_quantity = ask_quantity * bids[0].price
-                
-                Dapple.objects.matcher.trade(bids[0].id, asks[0].id, bid_quantity, ask_quantity, bids[0].buy_which_token, bids[0].sell_which_token, Dapple.objects.matcher.address, {gas: config.trade_gas_costs }, function(fail, result) {
+                */
+                Dapple.objects.matcher.trade(bids[0].id, asks[0].id, bids[0].buy_which_token, bids[0].sell_which_token, Dapple.objects.matcher.address, {gas: config.trade_gas_costs }, function(fail, result) {
                     if(!fail) {
                         console.log(result)
                     }

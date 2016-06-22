@@ -29,39 +29,79 @@ contract TraderKeeper is Assertive {
     }
     
     //initially only the amount that was bought can be sold, so quantity is the same for bid/ask
-    function trade(uint bid_id, uint ask_id, uint bidQuantity, uint askQuantity, ERC20 buying, ERC20 selling, SimpleMarket maker_address) {
+    function trade(uint bid_id, uint ask_id, ERC20 buying, ERC20 selling, SimpleMarket maker_address) {
         assert(msg.sender == owner);
         
-        //Check if the keeper has enough balance for the trades
-        var bid_buy_how_much = getBuyAmount(bid_id, maker_address);        
+        /*var bid_buy_how_much = getBuyHowMuch(bid_id, maker_address);
+        var bid_sell_how_much = getSellHowMuch(bid_id, maker_address);
+        var ask_buy_how_much = getBuyHowMuch(ask_id, maker_address);
+        var ask_sell_how_much = getSellHowMuch(ask_id, maker_address);*/
+        var (bid_buy_how_much, bid_sell_how_much) = getOffer(bid_id, maker_address);
+        var (ask_buy_how_much, ask_sell_how_much) = getOffer(ask_id, maker_address);        
         var balance_keeper_buying = balanceOf(buying);
-        assert(balance_keeper_buying >= bid_buy_how_much);
         
-        var ask_buy_how_much = getBuyAmount(ask_id, maker_address);
-        var balance_keeper_selling = balanceOf(selling);
-        assert(balance_keeper_selling >= ask_buy_how_much);
+        var (ask_quantity, bid_quantity) = determineTradeQuantity(bid_buy_how_much, bid_sell_how_much, ask_buy_how_much, ask_sell_how_much, balance_keeper_buying);
         
-        //Check and set allowance
-        var buy_allowance = buying.allowance(this, maker_address);
-        if(buy_allowance < bid_buy_how_much) {
-            buying.approve(maker_address, bid_buy_how_much);
-        }
+        //Check if the keeper has enough balance for the trades
+        var ask_total_price = (ask_buy_how_much / ask_sell_how_much) * ask_quantity; 
+        selling.approve(maker_address, ask_total_price);
+        //assert(balance_keeper_buying >= ask_total_price);
+        //checkBalanceAndAllowance(ask_buy_how_much, ask_sell_how_much, ask_quantity, selling, maker_address);
         
-        var sell_allowance = selling.allowance(this, maker_address);
-        if(sell_allowance < ask_buy_how_much) {
-            selling.approve(maker_address, ask_buy_how_much);
-        }
+        var askSuccess = maker_address.buyPartial(ask_id, ask_quantity);
+        assert(askSuccess);
         
-        var askSuccess = maker_address.buyPartial(ask_id, askQuantity);
-        assert(askSuccess);        
-        var bidSuccess = maker_address.buyPartial(bid_id, bidQuantity);
+        var bid_total_price = (bid_buy_how_much / bid_sell_how_much) * bid_quantity;
+        buying.approve(maker_address, bid_total_price);
+        
+        //checkBalanceAndAllowance(bid_buy_how_much, bid_sell_how_much, bid_quantity, buying, maker_address);
+        
+        var bidSuccess = maker_address.buyPartial(bid_id, bid_quantity);
         assert(bidSuccess);
-        
     }
     
-    function getBuyAmount(uint bid_id, SimpleMarket maker_market) constant returns (uint amount){
-        var (sell_how_much, sell_which_token, buy_how_much, buy_which_token) = maker_market.getOffer(bid_id);
-        return buy_how_much;
+    function getSellHowMuch(uint id, SimpleMarket maker_address) constant returns (uint) {
+        var (sell_how_much, sell_which_token, buy_how_much, buy_which_token) = maker_address.getOffer(id);
+        return (sell_how_much);
+    }
+    
+    function getBuyHowMuch(uint id, SimpleMarket maker_address) constant returns (uint) {
+        var (sell_how_much, sell_which_token, buy_how_much, buy_which_token) = maker_address.getOffer(id);
+        return (buy_how_much);
+    }
+    
+    function checkBalanceAndAllowance(uint buy_how_much, uint sell_how_much, uint quantity, ERC20 token, SimpleMarket maker_address) {
+        var total_price = buy_how_much / sell_how_much * quantity;
+        var balance = balanceOf(token);
+        assert(balance >= total_price);
+        
+        var allowance = token.allowance(this, maker_address);
+        if(allowance < total_price) {
+            token.approve(maker_address, total_price);
+        }
+    }
+    
+    function getOffer(uint id, SimpleMarket maker_address) constant returns (uint, uint) {
+        var (sell_how_much, sell_which_token, buy_how_much, buy_which_token) = maker_address.getOffer(id);
+        return (sell_how_much, buy_how_much);
+    }
+    
+    function determineTradeQuantity(uint bid_buy_how_much, uint bid_sell_how_much, uint ask_buy_how_much, uint ask_sell_how_much, uint balance) constant returns (uint askQuantity, uint bidQuantity) {
+        var minimum_ask_bid = minimum(bid_buy_how_much, ask_sell_how_much);
+        var amount_before_balance = minimum_ask_bid * (ask_buy_how_much / ask_sell_how_much);
+        var amount = minimum(balance, amount_before_balance);
+        var ask_quantity = minimum_ask_bid * (amount / amount_before_balance);
+        var bid_quantity = ask_quantity * (bid_sell_how_much / bid_buy_how_much);
+        return (ask_quantity, bid_quantity);
+    }
+    
+    function minimum(uint a, uint b) constant returns (uint minimum) {
+        if (a < b) {
+            return a;    
+        } 
+        else {
+            return b;
+        }
     }
 }
 

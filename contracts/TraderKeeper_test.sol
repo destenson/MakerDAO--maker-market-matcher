@@ -126,20 +126,20 @@ contract TraderKeeperTest is Test {
     }   
     
     function testTrade() {
-        keeper.trade(bid_id_first, ask_id_first, 100, token2, token1, simple_market);
+        keeper.trade(bid_id_first, ask_id_first, token2, token1, simple_market);
     }
     
     function testFailTradeBuy() {
-        keeper.trade(0, ask_id_first, 100, token2, token1, simple_market);
+        keeper.trade(0, ask_id_first, token2, token1, simple_market);
     }
     
     function testFailTradeSell() {
-        keeper.trade(bid_id_first, 0, 100, token2, token1, simple_market);
+        keeper.trade(bid_id_first, 0, token2, token1, simple_market);
     }
     
     function testFailInsufficientBalance() {
         keeper.withdraw(token2, initial_balance_keeper_t2);
         assertEq(token2.balanceOf(keeper), 0);
-        keeper.trade(bid_id_first, ask_id_first, 10, token1, token2, simple_market);
+        keeper.trade(bid_id_first, ask_id_first, token1, token2, simple_market);
     }
 }
